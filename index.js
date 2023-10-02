@@ -19,7 +19,8 @@ import User from "./models/User.js";
 import conversationRouter from './routes/conversations.js'
 import messageRouter from './routes/messages.js'
 import { env } from "./config/config.js";
-import ServerlessHttp from "serverless-http";
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +37,7 @@ const io = new Server(server, {
   }
 })
 
+app.get("/", (req, res)=> res.json({testing:"working..."}));
 app.use(express.json());
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
@@ -46,14 +48,26 @@ app.use(cors());
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
 /* FILE STORAGE */
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/assets");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "public/assets");
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.originalname);
+//   },
+// });
+cloudinary.config({
+  cloud_name: env.cloudinary_cloud_name,
+  api_key: env.cloudinary_api_key,
+  api_secret: env.cloudinary_api_secret
 });
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params:{
+    folder:"dps"
+  }
+})
 const upload = multer({ storage });
 
 /* ROUTES WITH FILES */
